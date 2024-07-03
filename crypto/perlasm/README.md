@@ -15,14 +15,16 @@ The first thing we do is setup the file and type of assembler
     &asm_init($ARGV[0]);
 
 The first argument is the 'type'.  Currently
-`cpp`, `sol`, `a.out`, `elf` or `win32`.
+`a.out`, `elf`, `coff`, `macosx`, `win32n` or `win32`.
 The second argument is the file name.
 
 The reciprocal function is
 `&asm_finish()` which should be called at the end.
 
-There are two main 'packages'. `x86ms.pl`, which is the Microsoft assembler,
-and `x86unix.pl` which is the unix (gas) version.
+There are several main 'packages':
+- `x86masm.pl`, which is the Microsoft assembler,
+- `x86nasm.pl`, which is the Netwide Assembler,
+- and `x86gas.pl`, which is the GNU Binutils version.
 
 Functions of interest are:
 
