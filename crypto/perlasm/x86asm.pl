@@ -265,7 +265,7 @@ sub ::asm_init
 
     $i386=$cpu;
 
-    $elf=$cpp=$coff=$aout=$macosx=$win32=$mwerks=$android=0;
+    $elf=$coff=$aout=$macosx=$win32=$android=0;
     if    (($type eq "elf"))
     {	$elf=1;			require "x86gas.pl";	}
     elsif (($type eq "elf-1"))

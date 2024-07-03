@@ -13,7 +13,7 @@ package x86nasm;
 
 $::lbdecor="L\$";		# local label decoration
 $nmdecor="_";			# external name decoration
-$drdecor=$::mwerks?".":"";	# directive decoration
+$drdecor="";			# directive decoration
 
 $initseg="";
 
@@ -21,14 +21,12 @@ sub ::generic
 { my $opcode=shift;
   my $tmp;
 
-    if (!$::mwerks)
-    {   if    ($opcode =~ m/^j/o && $#_==0) # optimize jumps
+    if    ($opcode =~ m/^j/o && $#_==0) # optimize jumps
 	{   $_[0] = "NEAR $_[0]";   	}
 	elsif ($opcode eq "lea" && $#_==1)  # wipe storage qualifier from lea
 	{   $_[1] =~ s/^[^\[]*\[/\[/o;	}
 	elsif ($opcode eq "clflush" && $#_==0)
 	{   $_[0] =~ s/^[^\[]*\[/\[/o;	}
-    }
     &::emit($opcode,@_);
   1;
 }
@@ -47,7 +45,6 @@ sub get_mem
 
     if ($size ne "")
     {	$ret .= "$size";
-	$ret .= " PTR" if ($::mwerks);
 	$ret .= " ";
     }
     $ret .= "[";
@@ -80,13 +77,11 @@ sub ::BP	{ &get_mem("BYTE",@_);  }
 sub ::DWP	{ &get_mem("DWORD",@_); }
 sub ::WP	{ &get_mem("WORD",@_);	}
 sub ::QWP	{ &get_mem("",@_);      }
-sub ::BC	{ (($::mwerks)?"":"BYTE ")."@_";  }
-sub ::DWC	{ (($::mwerks)?"":"DWORD ")."@_"; }
+sub ::BC	{ ("BYTE ")."@_";  }
+sub ::DWC	{ ("DWORD ")."@_"; }
 
 sub ::file
-{   if ($::mwerks)	{ push(@out,".section\t.text,64\n"); }
-    else
-    { my $tmp=<<___;
+{   my $tmp=<<___;
 %ifidn __OUTPUT_FORMAT__,obj
 section	code	use32 class=code align=64
 %elifidn __OUTPUT_FORMAT__,win32
@@ -97,15 +92,12 @@ section	.text	code
 %endif
 ___
 	push(@out,$tmp);
-    }
 }
 
 sub ::function_begin_B
 { my $func=shift;
   my $global=($func !~ /^_/);
   my $begin="${::lbdecor}_${func}_begin";
-
-    $begin =~ s/^\@/./ if ($::mwerks);	# the torture never stops
 
     &::LABEL($func,$global?"$begin":"$nmdecor$func");
     $func=$nmdecor.$func;
@@ -146,11 +138,11 @@ sub ::public_label
 {   push(@out,"${drdecor}global\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");  }
 
 sub ::data_byte
-{   push(@out,(($::mwerks)?".byte\t":"db\t").join(',',@_)."\n");	}
+{   push(@out,("db\t").join(',',@_)."\n");	}
 sub ::data_short
-{   push(@out,(($::mwerks)?".word\t":"dw\t").join(',',@_)."\n");	}
+{   push(@out,("dw\t").join(',',@_)."\n");	}
 sub ::data_word
-{   push(@out,(($::mwerks)?".long\t":"dd\t").join(',',@_)."\n");	}
+{   push(@out,("dd\t").join(',',@_)."\n");	}
 
 sub ::align
 {   push(@out,"${drdecor}align\t$_[0]\n");	}
@@ -172,8 +164,7 @@ ___
 }
 
 sub ::dataseg
-{   if ($mwerks)	{ push(@out,".section\t.data,4\n");   }
-    else		{ push(@out,"section\t.data align=4\n"); }
+{   push(@out,"section\t.data align=4\n");
 }
 
 sub ::safeseh
