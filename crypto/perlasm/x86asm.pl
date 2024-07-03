@@ -289,6 +289,7 @@ Pick one target type from
 	a.out	- DJGPP, elder OpenBSD, etc.
 	coff	- GAS/COFF such as Win32 targets
 	win32n	- Windows 95/Windows NT NASM format
+	win32	- Microsoft Assembler (MASM) format
 	macosx	- Mac OS X
 EOF
 	exit(1);
