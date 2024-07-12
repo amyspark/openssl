@@ -26,7 +26,5 @@ find config/archs -iname '*.def' -exec sh -c "$cmd" _ignored {} \;
 rm -rf ../../../generated-config/archs/aix*
 # 32-bit s390x supported in Meson
 rm -rf ../../../generated-config/archs/linux32-s390x
-# This is for old gas/nasm versions, we do not care about them
-rm -rf ../../../generated-config/archs/*/asm_avx2
 # Remove build info files, we use hardcoded deterministic one instead
 rm -rf ../../../generated-config/archs/*/*/crypto/buildinf.h
