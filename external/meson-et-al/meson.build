@@ -241,7 +241,7 @@ else
   message('OpenSSL is configured with ASM support')
 endif
 
-subdir('include')
+subdir('include/openssl')
 
 subdir('generated-config/archs' / arch_subdir / asm)
 

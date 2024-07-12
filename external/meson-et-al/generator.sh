@@ -6,10 +6,27 @@ cd "$(dirname "${BASH_SOURCE[0]}")"
 
 rm -rf generated-config
 
-# Copy `meson.build` template file
-cp ../../../meson.build.tmpl config/
-
 rm -rf config/archs
+
+# Generate manifest for ms/applink.c
+mkdir -p ms
+cat <<EOF > ms/meson.build
+install_headers(
+    'applink.c'
+    subdir: 'openssl',
+)
+EOF
+
+# Generate manifest for architecture-agnostic headers
+headers=$(find ../../include/openssl -name *.h -o -name *.H -not -name '__DECC_*' | xargs -I % basename % | xargs -I % echo "    '%',")
+mkdir -p include/openssl
+cat <<EOF > include/openssl/meson.build
+openssl_headers = files(
+$headers
+)
+EOF
+
+# Generate scaffold
 LANG=C make -C config
 
 # Copy generated files back into correct place
