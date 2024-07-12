@@ -4,18 +4,54 @@ libcrypto_sources = [
 foreach $src (@libcrypto_srcs) {
   $OUT .= "  '$src',\n";
 }
+-%%]
+# For compatibility with meson < 0.64
+libcrypto_asm = [
+%%-
 foreach $src (@generated_srcs) {
   if ($src !~ /\.ld/) {
     $OUT .= "  'generated-config/archs/$arch/$asm/$src',\n";
   }
 }
 -%%]
+libcrypto_rc = %%-
+  if (length($libcrypto_rc)) {
+    $OUT = "'generated-config/archs/$arch/$asm/$libcrypto_rc'";
+  }
+  else {
+    $OUT = "''";
+  }
+-%%
+libcrypto_def = %%-
+  if (length($libcrypto_def)) {
+    $OUT = "'generated-config/archs/$arch/$asm/$libcrypto_def'";
+  }
+  else {
+    $OUT = "''";
+  }
+-%%
 libssl_sources = [
 %%-
 foreach $src (@libssl_srcs) {
   $OUT .= "  '$src',\n";
 }
 -%%]
+libssl_def = %%-
+  if (length($libssl_def)) {
+    $OUT = "'generated-config/archs/$arch/$asm/$libssl_def'";
+  }
+  else {
+    $OUT = "''";
+  }
+-%%
+libssl_rc = %%-
+  if (length($libssl_def)) {
+    $OUT = "'generated-config/archs/$arch/$asm/$libssl_rc'";
+  }
+  else {
+    $OUT = "''";
+  }
+-%%
 openssl_defines = [
 %%-
 foreach $define (@{$config{defines}}) {
@@ -82,16 +118,19 @@ openssl_include_directories = [
   'generated-config/archs/%%-$arch-%%/%%-$asm-%%/providers/common/include',
 ]
 
+openssl_arch_headers = [
+%%-
+foreach $src (@openssl_arch_headers) {
+  $OUT .= "  'generated-config/archs/$arch/$asm/$src',\n";
+}
+-%%]
+
 # OpenSSL CLI
 openssl_cli_sources = [
 %%-
 foreach $src (@apps_openssl_srcs) {
-  if ($src eq 'apps/progs.c') {
-    $OUT .= "  'generated-config/archs/$arch/$asm/$src',\n";
-  } else {
-    unless ($src eq "apps/openssl.rc") {
-      $OUT .= "  '$src',\n";
-    }
+  unless ($src eq "apps/openssl.rc") {
+    $OUT .= "  '$src',\n";
   }
 }
 foreach $src (@libapps_srcs) {
