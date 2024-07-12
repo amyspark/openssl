@@ -27,13 +27,31 @@ my $arch = shift @ARGV;
 my $nasm_banner = `nasm -v`;
 die "Error: nasm is not installed." if (!$nasm_banner);
 
-# gas version check
-my $gas_version_min = 2.30;
+# gas/llvm-as version check
 my $gas_banner = `gcc -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`;
-my ($gas_version) = ($gas_banner =~/GNU assembler version ([2-9]\.[0-9]+)/);
-if ($gas_version < $gas_version_min) {
-  die "Error: gas version $gas_version is too old." .
-    "$gas_version_min or higher is required.";
+if ($gas_banner) {
+  my $gas_version_min = 2.30;
+  my ($gas_version) = ($gas_banner =~/GNU assembler version ([2-9]\.[0-9]+)/);
+  if ($gas_version < $gas_version_min) {
+    die "Error: gas version $gas_version is too old." .
+      "$gas_version_min or higher is required.";
+  }
+} else {
+  my $llvm_version_min = 9.0;
+  my $llvm_banner = `clang -Wa,--version -c -o /dev/null -x assembler /dev/null 2>&1`;
+  my ($llvm_as_version) = ($llvm_banner =~/clang version ([0-9]+\.[0-9]+)/);
+  if ($llvm_as_version < $llvm_version_min) {
+    die "Error: LLVM $llvm_as_version is too old." .
+      "$llvm_version_min or higher is required."
+  }
+}
+
+# Set the compiler
+my $compiler;
+if ($gas_banner) {
+  $compiler = 'cc';
+} else {
+  $compiler = 'clang';
 }
 
 our $cfg_dir = "$FindBin::Bin/../";
@@ -109,6 +127,12 @@ if ($fips_ld ne "" and not $is_win) {
        "$base_dir/providers/fips.ld") or die "Copy failed: $!";
 }
 
+
+# list headers following the Makefile glob
+my @openssl_arch_headers = ();
+foreach my $obj (glob("$base_dir/include/openssl/*.{h,H}")) {
+  push(@openssl_arch_headers, substr($obj, length($base_dir) + 1));
+}
 
 # read openssl source lists from configdata.pm
 my @libapps_srcs = ();
@@ -266,6 +290,43 @@ foreach my $obj (@{$unified_info{sources}->{'apps/openssl'}}) {
   push(@apps_openssl_srcs, ${$unified_info{sources}->{$obj}}[0]);
 }
 
+# msvc and mingw require the .rc and .def, but none appear in
+# sources; we need to pluck them out of generate
+my @win_resources = grep {/(.rc$)|(.def$)/} (keys %{$unified_info{generate}});
+foreach my $src (@win_resources) {
+  # VC makefiles are intended for static files
+  # Execute the rules straight out of configdata
+  my $generation_cmd = join(" ", @{$unified_info{generate}->{$src}});
+  my $cmd = "cd $src_dir && $generation_cmd > $src && " .
+    "cp --parents $src $cfg_dir/archs/$arch/$asm && cd $cfg_dir";
+  system("$cmd") == 0 or die "Error in system($cmd)";
+}
+
+my $libssl_def;
+if (exists $unified_info{generate}->{'libssl.def'}) {
+  $libssl_def = 'libssl.def';
+} else {
+  $libssl_def = '';
+}
+my $libssl_rc;
+if (exists $unified_info{generate}->{'libssl.rc'}) {
+  $libssl_rc = 'libssl.rc';
+} else {
+  $libssl_rc = '';
+}
+my $libcrypto_def;
+if (exists $unified_info{generate}->{'libcrypto.def'}) {
+  $libcrypto_def = 'libcrypto.def';
+} else {
+  $libcrypto_def = '';
+}
+my $libcrypto_rc;
+if (exists $unified_info{generate}->{'libcrypto.rc'}) {
+  $libcrypto_rc = 'libcrypto.rc';
+} else {
+  $libcrypto_rc = '';
+}
+
 # Generate all asm files and copy into config/archs
 foreach my $src (@generated_srcs) {
   my $cmd = "cd $src_dir && CC=$compiler ASM=nasm make -f $makefile $src;" .
@@ -368,9 +429,43 @@ open(FIPSGYPI, ">", $cl_path) or die "Couldn't open $cl_path: $!";
 print CLGYPI "$clgypi";
 close(CLGYPI);
 
+# Create meson.build
+my $mtemplate =
+    Text::Template->new(TYPE => 'FILE',
+                        SOURCE => 'meson.build.tmpl',
+                        DELIMITERS => [ "%%-", "-%%" ]
+                        );
+
+my $meson = $mtemplate->fill_in(
+    HASH => {
+        libssl_srcs => \@libssl_srcs,
+        libssl_def => \$libssl_def,
+        libssl_rc => \$libssl_rc,
+        libcrypto_srcs => \@libcrypto_srcs,
+        libcrypto_def => \$libcrypto_def,
+        libcrypto_rc => \$libcrypto_rc,
+        generated_srcs => \@generated_srcs,
+        apps_openssl_srcs => \@apps_openssl_srcs,
+        libapps_srcs => \@libapps_srcs,
+        openssl_arch_headers => \@openssl_arch_headers,
+        config => \%config,
+        target => \%target,
+        cflags => \@cflags,
+        asm => \$asm,
+        arch => \$arch,
+        lib_cppflags => \@lib_cppflags,
+        is_win => \$is_win,
+    });
+
+my $meson_path = "$FindBin::Bin/$arch/$asm/meson.build";
+make_path(dirname($meson_path));
+open(MESON, ">", $meson_path) or die "Couldn't open $meson_path: $!";
+print MESON "$meson";
+close(MESON);
+
 # Clean Up
 my $cmd2 ="cd $src_dir; make -f $makefile clean; make -f $makefile distclean;" .
-    "git clean -f $src_dir/crypto";
+    "git clean -f crypto";
 system($cmd2) == 0 or die "Error in system($cmd2)";
 
 

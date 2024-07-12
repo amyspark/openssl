@@ -1,9 +1,16 @@
-# This Makefile is confirmed to be run only on Linux (CentOS and
-# Ubuntu). perl5 and gas(>=2.26) are needed.
+# This Makefile is confirmed to be run on Linux (CentOS and
+# Ubuntu) or on a MSYS2 shell.
+# perl5, nasm, and either gas(>=2.26) or LLVM are needed.
 
-UNAME_S := $(shell uname -s)
-ifneq ($(UNAME_S),Linux)
-  $(error This can be run only on Linux)
+UNAME_S := $(shell uname -o)
+ifneq (, $(findstring Linux,$(UNAME_S)))
+	UNAME_OK:=true
+endif
+ifeq ($(UNAME_S),Msys)
+	UNAME_OK:=true
+endif
+ifneq ($(UNAME_OK),true)
+  $(error This can be run only on Linux or MSYS)
 endif
 
 PERL    = perl
@@ -11,13 +18,13 @@ PERL    = perl
 # Supported architecture list
 ASM_ARCHS = aix64-gcc-as BSD-x86 BSD-x86_64 \
 darwin64-x86_64-cc darwin-i386-cc darwin64-arm64-cc linux-aarch64 \
-linux-armv4 linux-elf linux-x86_64 \
-linux-ppc64le linux32-s390x linux64-s390x linux64-mips64\
-solaris-x86-gcc solaris64-x86_64-gcc VC-WIN64A VC-WIN32
+linux-armv4 linux-elf linux-x32 linux-x86_64 linux-ppc linux-ppc64 \
+linux-ppc64le linux32-s390x linux64-s390x linux64-mips64 \
+solaris-x86-gcc solaris64-x86_64-gcc VC-WIN64A VC-WIN32 mingw mingw64
 
 NO_ASM_ARCHS = VC-WIN64-ARM linux64-riscv64 linux64-loongarch64
 
-CC = gcc
+CC ?= gcc
 FAKE_GCC = ../config/fake_gcc.pl
 
 CONFIGURE = ./Configure
