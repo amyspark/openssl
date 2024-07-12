@@ -1,0 +1,8 @@
+*.gni
+*.gyp
+*.gypi
+*.cnf
+*.asm
+*.c
+*.h
+**/configdata.pm
