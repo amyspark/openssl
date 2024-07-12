@@ -60,10 +60,7 @@ our $arch_dir = "$cfg_dir/archs/$arch";
 our $base_dir = "$arch_dir/$asm";
 
 my $is_win = ($arch =~/^VC-WIN/);
-# VC-WIN32 and VC-WIN64A generate makefile but it can be available
-# with only nmake. Use pre-created Makefile_VC_WIN32
-# Makefile_VC-WIN64A instead.
-my $makefile = $is_win ? "$cfg_dir/Makefile_$arch": "Makefile";
+my $makefile = "Makefile";
 # Generate arch dependent header files with Makefile
 my $buildinf = "crypto/buildinf.h";
 my $progs = "apps/progs.h";
