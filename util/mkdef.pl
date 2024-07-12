@@ -299,8 +299,6 @@ sub writer_windows {
 ; Definition file for the DLL version of the $libname library from OpenSSL
 ;
 
-LIBRARY         "$libname"
-
 EXPORTS
 _____
     for (@_) {
