@@ -2,9 +2,9 @@
 use 5.10.0;
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/../openssl/";
-use lib "$FindBin::Bin/../openssl/util/perl";
-use lib "$FindBin::Bin/../openssl/util/perl/OpenSSL";
+use lib "$FindBin::Bin/../../../";
+use lib "$FindBin::Bin/../../../util/perl";
+use lib "$FindBin::Bin/../../../util/perl/OpenSSL";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Copy;
@@ -12,8 +12,8 @@ use File::Path qw/make_path/;
 #use with_fallback qw(Text::Template);
 use fallback qw(Text::Template);
 
-# Read configdata from ../openssl/configdata.pm that is generated
-# with ../openssl/Configure options arch
+# Read configdata from <openssl root>/configdata.pm that is generated
+# with <openssl root>/Configure options arch
 use configdata;
 
 my $asm = shift @ARGV;
@@ -36,21 +36,22 @@ if ($gas_version < $gas_version_min) {
     "$gas_version_min or higher is required.";
 }
 
-our $src_dir = "../openssl";
-our $arch_dir = "../config/archs/$arch";
+our $cfg_dir = "$FindBin::Bin/../";
+our $src_dir = "$cfg_dir/../..";
+our $arch_dir = "$cfg_dir/archs/$arch";
 our $base_dir = "$arch_dir/$asm";
 
 my $is_win = ($arch =~/^VC-WIN/);
 # VC-WIN32 and VC-WIN64A generate makefile but it can be available
 # with only nmake. Use pre-created Makefile_VC_WIN32
 # Makefile_VC-WIN64A instead.
-my $makefile = $is_win ? "../config/Makefile_$arch": "Makefile";
+my $makefile = $is_win ? "$cfg_dir/Makefile_$arch": "Makefile";
 # Generate arch dependent header files with Makefile
 my $buildinf = "crypto/buildinf.h";
 my $progs = "apps/progs.h";
 my $prov_headers = "providers/common/include/prov/der_dsa.h providers/common/include/prov/der_wrap.h providers/common/include/prov/der_rsa.h providers/common/include/prov/der_ecx.h providers/common/include/prov/der_sm2.h providers/common/include/prov/der_ec.h providers/common/include/prov/der_digests.h";
 my $fips_ld = ($arch =~ m/linux/ ? "providers/fips.ld" : "");
-my $cmd1 = "cd ../openssl; make -f $makefile clean build_generated $buildinf $progs $prov_headers $fips_ld;";
+my $cmd1 = "cd $src_dir && make -f $makefile clean build_generated $buildinf $progs $prov_headers $fips_ld;";
 system($cmd1) == 0 or die "Error in system($cmd1)";
 
 # Copy and move all arch dependent header files into config/archs
@@ -267,8 +268,8 @@ foreach my $obj (@{$unified_info{sources}->{'apps/openssl'}}) {
 
 # Generate all asm files and copy into config/archs
 foreach my $src (@generated_srcs) {
-  my $cmd = "cd ../openssl; CC=gcc ASM=nasm make -f $makefile $src;" .
-    "cp --parents $src ../config/archs/$arch/$asm; cd ../config";
+  my $cmd = "cd $src_dir && CC=$compiler ASM=nasm make -f $makefile $src;" .
+    "cp --parents $src $cfg_dir/archs/$arch/$asm; cd $cfg_dir";
   system("$cmd") == 0 or die "Error in system($cmd)";
 }
 
@@ -307,7 +308,9 @@ my $gypi = $template->fill_in(
         is_win => \$is_win,
     });
 
-open(GYPI, "> ./archs/$arch/$asm/openssl.gypi");
+my $gypi_path = "$FindBin::Bin/$arch/$asm/openssl.gypi";
+make_path(dirname($gypi_path));
+open(GYPI, ">", $gypi_path) or die "Couldn't open $gypi_path: $!";
 print GYPI "$gypi";
 close(GYPI);
 #
@@ -332,7 +335,9 @@ my $fipsgypi = $fipstemplate->fill_in(
 	linker_script => $fips_linker_script,
     });
 
-open(FIPSGYPI, "> ./archs/$arch/$asm/openssl-fips.gypi");
+my $fips_path = "$FindBin::Bin/$arch/$asm/openssl-fips.gypi";
+make_path(dirname($fips_path));
+open(FIPSGYPI, ">", $fips_path) or die "Couldn't open $fips_path: $!";
 print FIPSGYPI "$fipsgypi";
 close(FIPSGYPI);
 
@@ -357,7 +362,9 @@ my $clgypi = $cltemplate->fill_in(
         is_win => \$is_win,
     });
 
-open(CLGYPI, "> ./archs/$arch/$asm/openssl-cl.gypi");
+my $cl_path = "$FindBin::Bin/$arch/$asm/openssl-cl.gypi";
+make_path(dirname($cl_path));
+open(FIPSGYPI, ">", $cl_path) or die "Couldn't open $cl_path: $!";
 print CLGYPI "$clgypi";
 close(CLGYPI);
 

@@ -2,7 +2,7 @@
 use 5.10.0;
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/../openssl/util/perl/OpenSSL";
+use lib "$FindBin::Bin/../../../util/perl/OpenSSL";
 use Text::Template;
 
 our $src_dir = "../openssl";

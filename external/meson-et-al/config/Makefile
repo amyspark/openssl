@@ -32,7 +32,7 @@ NO_WARN_ENV = CONFIGURE_CHECKER_WARN=1
 
 GENERATE = ./generate_gypi.pl
 
-OPSSL_SRC = ../openssl
+OPSSL_SRC = ../../..
 
 # Header files generated with Configure
 #INT_CFGS = bn_conf.h dso_conf.h
