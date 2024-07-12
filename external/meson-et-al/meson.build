@@ -33,16 +33,17 @@ include_directories = [
 
 compiler = meson.get_compiler('c')
 
-dependencies = [
-  # TODO: Make this optionally added once we have threading configurable via options
-  dependency('threads'),
-]
+dependencies = []
 defines = [
   # Compile out hardware engines. Most are stubs that dynamically load
   # the real driver but that poses a security liability when an attacker
   # is able to create a malicious DLL in one of the default search paths.
   'OPENSSL_NO_HW',
 ]
+if get_option('threads').allowed()
+  dependencies += [dependency('threads')
+  defines += ['OPENSSL_THREADS']
+endif
 c_args = []
 
 asm_opt = get_option('asm')
