@@ -73,6 +73,28 @@ foreach $define (@{$config{lib_defines}}) {
   $OUT .= "  '$define',\n";
 }
 -%%]
+# FIXME: Make these defines configurable -- currently they are
+# hardcoded in the configuration header (include/openssl/configuration.h
+# for each architecture + asm selection)
+openssl_api_defines = [
+%%-
+foreach $define (@{$config{openssl_api_defines}}) {
+  $OUT .= "  '$define',\n";
+}
+-%%]
+openssl_feature_defines = [
+%%-
+foreach $define (@{$config{openssl_feature_defines}}) {
+  $OUT .= "  '$define',\n";
+}
+-%%]
+openssl_sys_defines = [
+%%-
+foreach $define (@{$config{openssl_sys_defines}}) {
+  $OUT .= "  '$define',\n";
+}
+# END FIXME defines
+-%%]
 openssl_cflags = [
 %%-
 my %cflags_used;
