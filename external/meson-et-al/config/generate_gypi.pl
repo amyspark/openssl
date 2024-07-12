@@ -29,11 +29,11 @@ die "Error: nasm is not installed." if (!$nasm_banner);
 
 # gas/llvm-as version check
 my $gas_banner = `gcc -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`;
-if ($gas_banner) {
+my ($gas_version) = ($gas_banner =~/GNU assembler version ([2-9]\.[0-9]+)/);
+if ($gas_version ne "") {
   my $gas_version_min = 2.30;
-  my ($gas_version) = ($gas_banner =~/GNU assembler version ([2-9]\.[0-9]+)/);
   if ($gas_version < $gas_version_min) {
-    die "Error: gas version $gas_version is too old." .
+    die "Error: gas version $gas_version is too old. " .
       "$gas_version_min or higher is required.";
   }
 } else {
@@ -41,7 +41,7 @@ if ($gas_banner) {
   my $llvm_banner = `clang -Wa,--version -c -o /dev/null -x assembler /dev/null 2>&1`;
   my ($llvm_as_version) = ($llvm_banner =~/clang version ([0-9]+\.[0-9]+)/);
   if ($llvm_as_version < $llvm_version_min) {
-    die "Error: LLVM $llvm_as_version is too old." .
+    die "Error: LLVM $llvm_as_version is too old. " .
       "$llvm_version_min or higher is required."
   }
 }
