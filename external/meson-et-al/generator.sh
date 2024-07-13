@@ -38,10 +38,3 @@ find config/archs -name '*.h' -exec sh -c "$cmd" _ignored {} \;
 find config/archs -iname '*.s' -exec sh -c "$cmd" _ignored {} \;
 find config/archs -iname '*.rc' -exec sh -c "$cmd" _ignored {} \;
 find config/archs -iname '*.def' -exec sh -c "$cmd" _ignored {} \;
-
-# AIX is not supported by Meson
-rm -rf ../../../generated-config/archs/aix*
-# 32-bit s390x supported in Meson
-rm -rf ../../../generated-config/archs/linux32-s390x
-# Remove build info files, we use hardcoded deterministic one instead
-rm -rf ../../../generated-config/archs/*/*/crypto/buildinf.h
