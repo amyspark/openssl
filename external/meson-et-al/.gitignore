@@ -8,3 +8,4 @@
 **/configdata.pm
 include/openssl/meson.build
 ms/meson.build
+config/**/meson.build
