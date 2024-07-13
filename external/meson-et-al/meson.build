@@ -23,7 +23,6 @@ if not fs.exists('generated-config')
     bash,
     'generator.sh',
     check: true,
-    env: ['OPENSSL_VERSION=' + meson.project_version()],
   )
 endif
 
